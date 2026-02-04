@@ -1,15 +1,19 @@
-#pip install langchain langchain-openai openai python-dotenv
-#pip install python-dotenv langchain-google-genai
-#pip install pypdf
+# #pip install langchain langchain-openai openai python-dotenv
+# #pip install python-dotenv langchain-google-genai
+# #pip install pypdf
 from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_community.document_loaders import PyPDFLoader
 import os
 import csv
 
+# --- KONFIGURACJA ---
+load_dotenv()
+OUTPUT_FILE = "podsumowanie_bibliografii.csv"
+INPUT_PATH= "Articles/1406.2661v1.pdf"
+model_name= "gemini-2.5-flash"
 
-def check_csv(csv_path):
-    """Zwraca listę (set) plików, które już są w CSV."""
+def get_already_processed(csv_path):
     if not os.path.exists(csv_path):
         return set()
     processed = set()
@@ -27,24 +31,24 @@ def get_pdf_text(path):
 
     return "\n".join([p.page_content for p in pages])
 
-def is_file (road_to_path):
+def analyze_single_file (llm,road_to_path):
 
     tekst_do_analizy=get_pdf_text(road_to_path)
 
     prompt = f"""
-        Jesteś rzetelnym asystentem naukowym. 
+        Jesteś rzetelnym asystentem naukowym.
         Na podstawie poniższego tekstu:
         ---
         {tekst_do_analizy}
         ---
         Wykonaj zadania:
         1. Cel artykułu (3-5 zdań).
-        2. 3 najważniejsze pojęcia techniczne (nie tłumacz ich nazw).
+        2. 3 najważniejsze pojęcia techniczne (nie tłumacz ich nazw) z wyjaśnieniem.
         3. Najważniejsze wnioski.
 
         Zasada języka:
         - Jeśli tekst jest po POLSKU: odpowiedz tylko po polsku.
-        - Jeśli tekst jest po ANGIELSKU: podaj odpowiedź najpierw po angielsku, a poniżej jej pełne polskie tłumaczenie.
+        - Jeśli tekst jest po ANGIELSKU: podaj odpowiedź najpierw po Angirlsku, a poniżej oddzielone polskie tłumaczenie odpowiedzi.
         """
 
     try:
@@ -74,7 +78,6 @@ def gemini_to_csv(path, llm, plik):
     try:
 
         parts = raw_text.split('|')
-    # Usuwamy ewentualne zbędne napisy typu "TYTUŁ:"
         clean_parts = [p.replace("TYTUŁ:", "").replace("AUTOR:", "").replace("CEL:", "").replace("WNIOSKI:", "").strip()
                    for p in parts]
         if len(clean_parts)<4:
@@ -84,49 +87,48 @@ def gemini_to_csv(path, llm, plik):
     except Exception as e:
          return [plik, "Błąd formatowania", "", "", str(e)]
 
+def main():
+    key = os.getenv("GOOGLE_API_KEY")
+
+    if not key:
+        print(" BŁĄD: Nie znaleziono klucza GOOGLE_API_KEY w pliku .env")
+    else:
+        try:
+            llm = ChatGoogleGenerativeAI(
+                model=model_name
+            )
+            if os.path.isfile(INPUT_PATH):
+                analyze_single_file(llm,INPUT_PATH)
+
+            elif os.path.isdir(INPUT_PATH):
+                plik_istnieje = os.path.isfile(OUTPUT_FILE)
+                processed_files = get_already_processed(OUTPUT_FILE)
+
+                pliki = [f for f in os.listdir(INPUT_PATH) if f.lower().endswith('pdf')]
+
+                with open(OUTPUT_FILE, mode='a', newline='', encoding='utf-8') as f:
+                    writer = csv.writer(f, delimiter=';')
+
+                    # Zapisujemy nagłówek TYLKO jeśli plik jest nowy
+                    if not plik_istnieje:
+                        writer.writerow(['Plik', 'Tytuł', 'Autor', 'Cel badania', 'Główne wnioski'])
+
+                    for plik in pliki:
+                        if plik in processed_files:
+                            print(f"Pomijam zapisany plik: {plik} ")
+                            continue
+                        print(f"Pracuję nad plikiem :{plik}...")
+                        row = gemini_to_csv(INPUT_PATH, llm, plik)
+                        writer.writerow(row)
+                        f.flush()  # Gwarancja zapisu po każdym pliku
+
+            else:
+                print(f"Nie znalazłem pliku")
 
 
-load_dotenv()
-plik_wynikowy = "podsumowanie_bibliografii.csv"
-road_to_path = "Articles"# /2007.00047v1.pdf"
-already_check= check_csv(plik_wynikowy)
-# Sprawdzenie, czy klucz w ogóle się wczytał do systemu
-key = os.getenv("GOOGLE_API_KEY")
-
-if not key:
-    print(" BŁĄD: Nie znaleziono klucza GOOGLE_API_KEY w pliku .env")
-else:
-    try:
-        llm = ChatGoogleGenerativeAI(
-            model="gemini-2.5-flash-lite"
-        )
-        if os.path.isfile(road_to_path):
-           is_file(road_to_path)
-
-        elif os.path.isdir(road_to_path):
-            plik_istnieje = os.path.isfile(plik_wynikowy)
-
-            pliki = [f for f in os.listdir(road_to_path) if f.lower().endswith('pdf')]
-
-            with open(plik_wynikowy, mode ='a', newline='', encoding='utf-8') as f:
-                writer = csv.writer(f, delimiter=';')
-
-                # Zapisujemy nagłówek TYLKO jeśli plik jest nowy
-                if not plik_istnieje:
-                    writer.writerow(['Plik', 'Tytuł', 'Autor', 'Cel badania', 'Główne wnioski'])
-
-                for plik in pliki:
-                    if plik in already_check:
-                        print(f"Pomijam zapisany plik: {plik} ")
-                        continue
-                    print(f"Pracuję nad plikiem :{plik}...")
-                    row=gemini_to_csv(road_to_path,llm,plik)
-                    writer.writerow(row)
-
-        else:
-            print(f"Nie znalazłem pliku")
+        except Exception as e:
+            print(f"Wystąpił błąd: {e}")
 
 
-    except Exception as e:
-        print(f"Wystąpił błąd: {e}")
-
+if __name__ == "__main__":
+    main()
