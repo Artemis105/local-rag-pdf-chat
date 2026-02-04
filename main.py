@@ -10,7 +10,7 @@ import csv
 # --- KONFIGURACJA ---
 load_dotenv()
 OUTPUT_FILE = "podsumowanie_bibliografii.csv"
-INPUT_PATH= "Articles/1406.2661v1.pdf"
+INPUT_PATH= "Articles"
 model_name= "gemini-2.5-flash"
 
 def get_already_processed(csv_path):
@@ -62,10 +62,11 @@ def analyze_single_file (llm,road_to_path):
 def gemini_to_csv(path, llm, plik):
     text=get_pdf_text(os.path.join(path, plik))
     prompt = f"""
-    Jesteś asystentem naukowym. Przeanalizuj tekst i zwróć dane w formacie:
-    TYTUŁ|AUTOR|CEL|WNIOSKI
+    Jesteś asystentem naukowym. Przeanalizuj tekst i zwróć dane dokładnie w formacie:
+    TYTUŁ|AUTOR|CEL|SŁOWA KLUCZOWE|WNIOSKI
 
     Zasady:
+    - SŁOWA KLUCZOWE: podaj 3-5 najważniejszych pojęć po przecinku.
     - Jeśli tekst jest po angielsku, CEL i WNIOSKI napisz po polsku.
     - TYTUŁ i AUTOR zostaw w oryginale.
     - Użyj DOKŁADNIE znaku | jako separatora (tylko 3 znaki | w całej odpowiedzi).
@@ -78,11 +79,11 @@ def gemini_to_csv(path, llm, plik):
     try:
 
         parts = raw_text.split('|')
-        clean_parts = [p.replace("TYTUŁ:", "").replace("AUTOR:", "").replace("CEL:", "").replace("WNIOSKI:", "").strip()
+        clean_parts = [p.replace("TYTUŁ:", "").replace("AUTOR:", "").replace("CEL:", "").replace("SŁOWA KLUCZOWE:", "").replace("WNIOSKI:", "").strip()
                    for p in parts]
-        if len(clean_parts)<4:
-            clean_parts+= [""]*(4-len(clean_parts))
-        return [plik] + clean_parts[:4]
+        if len(clean_parts)<5:
+            clean_parts+= [""]*(5-len(clean_parts))
+        return [plik] + clean_parts[:5]
 
     except Exception as e:
          return [plik, "Błąd formatowania", "", "", str(e)]
@@ -111,7 +112,7 @@ def main():
 
                     # Zapisujemy nagłówek TYLKO jeśli plik jest nowy
                     if not plik_istnieje:
-                        writer.writerow(['Plik', 'Tytuł', 'Autor', 'Cel badania', 'Główne wnioski'])
+                        writer.writerow(['Plik', 'Tytuł', 'Autor', 'Cel badania','Słowa kluczowe', 'Główne wnioski'])
 
                     for plik in pliki:
                         if plik in processed_files:
