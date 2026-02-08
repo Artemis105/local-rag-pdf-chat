@@ -59,25 +59,19 @@ def main():
         )
         vectorstore = build_or_load_memory()
         history = ChatMessageHistory()
-        # prompt= """Jesteś pomocnym asystentem. Odpowiadaj po polsku.
-        #     Traktuj HISTORIĘ ROZMOWY tylko jako dodatkowy kontekst.
-        #     Jeśli nowe pytanie dotyczy zupełnie innego tematu niż historia, zignoruj historię i skup się wyłącznie na KONTEKŚCIE Z PDF.
-        #     Jeśli w tekście nie ma odpowiedzi, napisz rzetelnie, że nie posiadasz takich informacji.
-        prompt = """Jesteś precyzyjnym asystentem naukowym. 
-        Twoim głównym zadaniem jest odpowiadanie na podstawie dostarczonego KONTEKSTU Z PDF.
-
-        Zasady:
-        1. Priorytetem jest KONTEKST Z PDF. 
-        2. HISTORIĘ ROZMOWY traktuj tylko jako pomoc, by zrozumieć do czego odnoszą się zaimki (np. "to", "on", "poprzedni").
-        3. Jeśli użytkownik zmienia temat i zadaje pytanie niezwiązane z historią, zignoruj historię i odpowiedz tylko na podstawie PDF.
-        4. Jeśli w PDF nie ma odpowiedzi, napisz: "Nie znajduję informacji na ten temat w moich dokumentach".
-        
+        prompt= """Jesteś pomocnym asystentem. Odpowiadaj po polsku.
+            Traktuj HISTORIĘ ROZMOWY tylko jako dodatkowy kontekst.
+            Jeśli nowe pytanie dotyczy zupełnie innego tematu niż historia, zignoruj historię i skup się wyłącznie na KONTEKŚCIE Z PDF.
+            Jeśli w tekście nie ma odpowiedzi, napisz rzetelnie, że nie posiadasz takich informacji.
+            
+            
             HISTORIA ROZMOWY:{chat_history}
             Kontekst:{context}
             Pytanie: {question}
           """
+       
         prompt2=ChatPromptTemplate.from_template(prompt)
-        retriever=vectorstore.as_retriever(search_kwargs={"k":5})
+        retriever=vectorstore.as_retriever(search_kwargs={"k":3})
 
 
         # 2. Tworzymy narzędzie do zadawania pytań
