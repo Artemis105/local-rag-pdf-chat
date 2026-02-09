@@ -1,5 +1,6 @@
-import os
+#ollama run llama3.2\Ctrl + D
 
+import os
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 # from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_huggingface import HuggingFaceEmbeddings
@@ -11,7 +12,7 @@ from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
-
+from langchain_ollama import ChatOllama
 # --- KONFIGURACJA ---
 load_dotenv()
 DB_PATH = "My_base3"
@@ -39,7 +40,7 @@ def build_or_load_memory():
         print(f"Czytam: {file}")
         loader = PyPDFLoader(os.path.join(INPUT_PATH, file))
         docs = loader.load()
-        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1500, chunk_overlap=300)
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
         all_splits.extend(text_splitter.split_documents(docs))
 
     if not all_splits:
@@ -58,10 +59,14 @@ def main():
     if not key:
         print(" BŁĄD: Nie znaleziono klucza GOOGLE_API_KEY w pliku .env")
     else:
-
-        llm = ChatGoogleGenerativeAI(
-            model=model_name,
-            temperature=0.1 # im niższa tym mniej zmyśla
+        #if somebody don't have ollama
+        # llm = ChatGoogleGenerativeAI(
+        #     model=model_name,
+        #     temperature=0.1 # im niższa tym mniej zmyśla
+        # )
+        llm = ChatOllama(
+            model="llama3.2",
+            temperature=0.2,
         )
         vectorstore = build_or_load_memory()
         history = ChatMessageHistory()
@@ -128,7 +133,7 @@ def main():
                 context_text = "\n".join([d.page_content for d in relevant_docs])
 
                 #generate final response
-                sources = {doc.metadata.get('source', 'nieznane') for doc in relevant_docs}
+                sources = {os.path.basename(doc.metadata.get('source', 'nieznane')) for doc in relevant_docs}
 
                 response = rag_chain.invoke({
                     "question": query,
