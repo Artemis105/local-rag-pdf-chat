@@ -20,7 +20,7 @@ def main():
         print(" BŁĄD: Nie znaleziono klucza GOOGLE_API_KEY w pliku .env")
     else:
         # if somebody don't have ollama
-        
+
         # llm = ChatGoogleGenerativeAI(
         #     model=model_name,
         #     temperature=0.1 # im niższa tym mniej zmyśla
@@ -42,7 +42,7 @@ def main():
 
         Pytanie: {question}
         """
-
+       
         prompt2 = ChatPromptTemplate.from_template(prompt)
         retriever = vectorstore.as_retriever(search_kwargs={"k": 5})
 
