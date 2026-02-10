@@ -24,6 +24,7 @@ def build_or_load_memory():
     return create_new_database(embeddings)
 
 
+
 def create_new_database(embeddings):
     if not os.path.exists(INPUT_PATH):
         print(f"Directory {INPUT_PATH} does not exist.")
@@ -45,6 +46,7 @@ def create_new_database(embeddings):
 
     # Create and persist Chroma database
     return Chroma.from_documents(documents=all_splits, embedding=embeddings, persist_directory=DB_PATH)
+
 
 
 def update_database(vectorstore):

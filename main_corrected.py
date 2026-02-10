@@ -5,7 +5,7 @@ from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain_ollama import ChatOllama
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
-from langchain_google_genai import ChatGoogleGenerativeAI
+#from langchain_google_genai import ChatGoogleGenerativeAI  # gemini model
 
 # Import our database module
 from database import build_or_load_memory

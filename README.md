@@ -47,3 +47,4 @@ pip install -r requirements.txt
 ├── Chats/           # Exported conversation logs
 ├── My_base4/        # Local ChromaDB storage (ignored by Git)
 └── .env             # API keys & environment variables
+```
