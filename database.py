@@ -6,7 +6,7 @@ from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 # Database and input configuration
-DB_PATH = "My_base4"
+DB_PATH = "My_base"
 INPUT_PATH = "Articles"
 
 def build_or_load_memory():

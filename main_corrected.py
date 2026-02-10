@@ -5,60 +5,60 @@ from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain_ollama import ChatOllama
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
+from langchain_google_genai import ChatGoogleGenerativeAI
 
 # Import our database module
 from database import build_or_load_memory
 
-load_dotenv()
-key = os.getenv("GOOGLE_API_KEY")
+
 
 
 def main():
+    load_dotenv()
     key = os.getenv("GOOGLE_API_KEY")
+    # --- LLM SELECTION ---
+    # OPTION A: Gemini (Cloud) - Requires GOOGLE_API_KEY in .env
+    # if not key:
+    #     print("BŁĄD: Nie znaleziono klucza GOOGLE_API_KEY")
+    #     return
+    # llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.1)
 
-    if not key:
-        print(" BŁĄD: Nie znaleziono klucza GOOGLE_API_KEY w pliku .env")
-    else:
-        # if somebody don't have ollama
+    # OPTION B: Ollama (Local) - Default
 
-        # llm = ChatGoogleGenerativeAI(
-        #     model=model_name,
-        #     temperature=0.1 # im niższa tym mniej zmyśla
-        # )
-        llm = ChatOllama(
-            model="llama3.2",
-            temperature=0.2,  # this can be changed if we want other results 0,1 facts, 0,7 creative disccussion
-        )
+    llm = ChatOllama(
+        model="llama3.2",
+        temperature=0.2,  # this can be changed if we want other results 0,1 facts, 0,7 creative disccussion
+    )
 
-        vectorstore = build_or_load_memory()
-        history = ChatMessageHistory()
+    vectorstore = build_or_load_memory()
+    history = ChatMessageHistory()
 
 
-        prompt = """Jesteś ekspertem AI. Odpowiadaj zawsze po polsku, krótko i konkretnie.
-        Korzystaj z KONTEKSTU, aby odpowiedzieć na pytanie. Jeśli w KONTEKŚCIE nie ma odpowiedzi, użyj własnej wiedzy, ale zaznacz to.
+    prompt = """Jesteś ekspertem AI. Odpowiadaj zawsze po polsku, krótko i konkretnie.
+    Korzystaj z KONTEKSTU, aby odpowiedzieć na pytanie. Jeśli w KONTEKŚCIE nie ma odpowiedzi, użyj własnej wiedzy, ale zaznacz to.
 
-        KONTEKST: {context}
-        HISTORIA: {chat_history}
+    KONTEKST: {context}
+    HISTORIA: {chat_history}
 
-        Pytanie: {question}
-        """
-       
-        prompt2 = ChatPromptTemplate.from_template(prompt)
-        retriever = vectorstore.as_retriever(search_kwargs={"k": 5})
+    Pytanie: {question}
+    """
 
-        # 2. Create tool for asking questions
-        rag_chain = (
-                {
-                    # "Get articles"
-                    "context": lambda x: x["context"],
-                    # "Get original question"
-                    "question": lambda x: x["question"],
-                    "chat_history": lambda x: x["chat_history"]
-                }
-                | prompt2
-                | llm
-                | StrOutputParser()
-        )
+    prompt2 = ChatPromptTemplate.from_template(prompt)
+    retriever = vectorstore.as_retriever(search_kwargs={"k": 5})
+
+    # 2. Create tool for asking questions
+    rag_chain = (
+            {
+                # "Get articles"
+                "context": lambda x: x["context"],
+                # "Get original question"
+                "question": lambda x: x["question"],
+                "chat_history": lambda x: x["chat_history"]
+            }
+            | prompt2
+            | llm
+            | StrOutputParser()
+    )
 
     print("\n Czat gotowy! (wpisz 'exit' by wyjść)")
 

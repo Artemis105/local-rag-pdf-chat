@@ -1,0 +1,10 @@
+langchain_community==0.4.1
+langchain_core==1.2.11
+langchain_google_genai==4.2.0
+langchain_huggingface==1.2.0
+langchain_ollama==1.0.1
+langchain_text_splitters==1.1.0
+protobuf==6.33.5
+python-dotenv==1.2.1
+streamlit==1.54.0
+tqdm==4.67.2
