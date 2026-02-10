@@ -1,0 +1,17 @@
+# Python stuff
+__pycache__/
+*.pyc
+venv/
+
+# Environment secrets
+.env
+
+# Database (very important to ignore!)
+My_base4/
+My_base3/
+# User data
+Chats/
+Articles/
+
+# PyCharm specific
+.idea/
